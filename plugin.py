@@ -54,8 +54,9 @@ class BasePlugin:
 
     zappi_mode_texts = { 1: 'Fast', 2: 'Eco', 3: 'Eco++' }
     zappi_status_texts = { 1 : 'Waiting for export', 2 : 'DSR-Demand Side Response', 3: 'Diverting/Charging', 4: 'Boosting', 5: 'Charge Complete' }
-    charge_status_texts = { 'A' : 'EV disconnected', 'B1': 'EV connected', 'B2' : 'Waiting for EV', 'C1': 'EV ready to charge', 'C2': 'Charging', 'F': 'Fault restart' }
-    
+    charge_status_texts = { 'A' : 'EV disconnected', 'B1': 'EV connected', 'B2' : 'Waiting for EV', 'C1': 'EV ready to charge', 'C2': 'Charging', 'F': 'Fault / Restart' }
+    # Source - https://myenergi.info/open-energy-monitor-local-emoncms-t2192.html
+    # Or... rewrite to combine into a single display status, like this? - https://myenergi.info/how-to-tell-charge-complete-in-api-t1595.html#p13021
 
     def __init__(self):
         return
