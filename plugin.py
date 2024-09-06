@@ -52,6 +52,11 @@ class BasePlugin:
     maxAttempts = 3
     httpTimeout = 3
 
+    zappi_mode_texts = { 1: 'Fast', 2: 'Eco', 3: 'Eco++' }
+    zappi_status_texts = { 1 : 'Waiting for export', 2 : 'DSR-Demand Side Response', 3: 'Diverting/Charging', 4: 'Boosting', 5: 'Charge Complete' }
+    charge_status_texts = { 'A' : 'EV disconnected', 'B1': 'EV connected', 'B2' : 'Waiting for EV', 'C1': 'EV ready to charge', 'C2': 'Charging', 'F': 'Fault restart' }
+    
+
     def __init__(self):
         return
 
@@ -77,6 +82,12 @@ class BasePlugin:
             Domoticz.Device(Name="Grid Voltage", Unit=6, TypeName='Voltage').Create()
         if len(Devices) < 7:
             Domoticz.Device(Name="PV Self-consumption", Unit=7, TypeName='kWh', Options={'EnergyMeterMode':'1'}).Create()
+        if len(Devices) < 8:
+            Domoticz.Device(Name="Zappi Mode", Unit=8, TypeName='Text').Create()
+        if len(Devices) < 9:
+            Domoticz.Device(Name="Zappi Status", Unit=9, TypeName='Text').Create()
+        if len(Devices) < 10:
+            Domoticz.Device(Name="Charge Status", Unit=10, TypeName='Text').Create()
 
         DumpConfigToLog()
 
@@ -135,6 +146,9 @@ class BasePlugin:
                     zappi_div_watt = 0                              # Car Charging (W)
                     zappi_hom_watt = 0                              # Home Consumption (W)
                     zappi_slf_watt = 0                              # PV Self-consumption (W)
+                    zappi_zmo = 0                                   # Zappi Mode
+                    zappi_sta = 0                                   # Zappi Status
+                    zappi_pst = ''                                  # Charge Status
 
                     for data in j:
 
@@ -157,8 +171,20 @@ class BasePlugin:
                                     zappi_gen_watt += device['gen']
                                 if 'div' in device:
                                     zappi_div_watt += device['div']
+                                if 'zmo' in device:
+                                    zappi_zmo = device['zmo']  
+                                if 'sta' in device:
+                                    zappi_sta = device['sta']
+                                if 'pst' in device:
+                                    zappi_pst = device['pst']
+
                             zappi_hom_watt = (grid_pwr + zappi_gen_watt) - (zappi_div_watt + zappi_gep_watt)
                             zappi_slf_watt = max(zappi_gen_watt - zappi_gep_watt + min(grid_pwr, 0), 0)
+
+                            # TODO - note will currently only display status of last Zappi (if multiple Zappis exist)
+                            zappi_zmo_text = self.zappi_mode_texts.get(zappi_zmo, 'Unknown')
+                            zappi_sta_text = self.zappi_status_texts.get(zappi_sta, 'Unknown')
+                            zappi_pst_text = self.charge_status_texts.get(zappi_pst, 'Unknown')
 
                     # Work around negative kWh Domoticz issue #4736 using separate import and export grid meters
                     if (grid_pwr < 0):
@@ -174,6 +200,10 @@ class BasePlugin:
                     Devices[3].Update(nValue=0, sValue=str(zappi_div_watt)+";0")
                     Devices[4].Update(nValue=0, sValue=str(zappi_hom_watt)+";0")
                     Devices[7].Update(nValue=0, sValue=str(zappi_slf_watt)+";0")
+
+                    Devices[8].Update(nValue=0, sValue=zappi_zmo_text)
+                    Devices[9].Update(nValue=0, sValue=zappi_sta_text)
+                    Devices[10].Update(nValue=0, sValue=zappi_pst_text)
 
                     break # while True
 
