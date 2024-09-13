@@ -52,7 +52,7 @@ class BasePlugin:
     maxAttempts = 3
     httpTimeout = 3
 
-    zappi_mode_texts = { 1: 'Fast', 2: 'Eco', 3: 'Eco++' }
+    zappi_mode_texts = { 1: 'Fast', 2: 'Eco', 3: 'Eco++', 4: 'Stop' }
     zappi_status_texts = { 1 : 'Waiting for export', 2 : 'DSR-Demand Side Response', 3: 'Diverting/Charging', 4: 'Boosting', 5: 'Charge Complete' }
     charge_status_texts = { 'A' : 'EV disconnected', 'B1': 'EV connected', 'B2' : 'Waiting for EV', 'C1': 'EV ready to charge', 'C2': 'Charging', 'F': 'Fault / Restart' }
     # Source - https://myenergi.info/open-energy-monitor-local-emoncms-t2192.html
@@ -150,6 +150,7 @@ class BasePlugin:
                     zappi_zmo = 0                                   # Zappi Mode
                     zappi_sta = 0                                   # Zappi Status
                     zappi_pst = ''                                  # Charge Status
+                    zappi_che_watt = 0                              # Charge added this session
 
                     for data in j:
 
@@ -178,6 +179,8 @@ class BasePlugin:
                                     zappi_sta = device['sta']
                                 if 'pst' in device:
                                     zappi_pst = device['pst']
+                                if 'che' in device:
+                                    zappi_che_watt += device['che']
 
                             zappi_hom_watt = (grid_pwr + zappi_gen_watt) - (zappi_div_watt + zappi_gep_watt)
                             zappi_slf_watt = max(zappi_gen_watt - zappi_gep_watt + min(grid_pwr, 0), 0)
@@ -205,6 +208,7 @@ class BasePlugin:
                     Devices[8].Update(nValue=0, sValue=zappi_zmo_text)
                     Devices[9].Update(nValue=0, sValue=zappi_sta_text)
                     Devices[10].Update(nValue=0, sValue=zappi_pst_text)
+                    #Devices[11].Update(nValue=0, sValue=str(zappi_che_watt)+";0")  # TODO
 
                     break # while True
 
