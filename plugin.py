@@ -52,13 +52,14 @@ class BasePlugin:
     maxAttempts = 3
     httpTimeout = 3
 
+    zappi_mode_values = { 0: 4, 10: 1, 20: 2, 30: 3 }  # Selector level to API mode
     zappi_mode_texts = { 1: 'Fast', 2: 'Eco', 3: 'Eco++', 4: 'Stop' }
     zappi_status_texts = { 1 : 'Waiting for export', 2 : 'DSR-Demand Side Response', 3: 'Diverting/Charging', 4: 'Boosting', 5: 'Charge Complete' }
     charge_status_texts = { 'A' : 'EV disconnected', 'B1': 'EV connected', 'B2' : 'Waiting for EV', 'C1': 'EV ready to charge', 'C2': 'Charging', 'F': 'Fault / Restart' }
     # Source - https://myenergi.info/open-energy-monitor-local-emoncms-t2192.html
     # Or... rewrite to combine into a single display status, like this? - https://myenergi.info/how-to-tell-charge-complete-in-api-t1595.html#p13021
 
-    zappi_mode_values = { 0: 4, 10: 1, 20: 2, 30: 3 }  # Selector level to API mode
+    zappi_sno = 0  # Zappi Serial Number
 
     def __init__(self):
         return
@@ -156,6 +157,8 @@ class BasePlugin:
                     zappi_pst = ''                                  # Charge Status
                     zappi_che_watt = 0                              # Charge added this session
 
+                    self.zappi_sno = 0                              # Zappi Serial Number      
+
                     for data in j:
 
                         # Eddi
@@ -185,6 +188,8 @@ class BasePlugin:
                                     zappi_pst = device['pst']
                                 if 'che' in device:
                                     zappi_che_watt += device['che']
+                                if 'sno' in device:
+                                    self.zappi_sno = device['sno']
 
                             zappi_hom_watt = (grid_pwr + zappi_gen_watt) - (zappi_div_watt + zappi_gep_watt)
                             zappi_slf_watt = max(zappi_gen_watt - zappi_gep_watt + min(grid_pwr, 0), 0)
@@ -226,8 +231,11 @@ class BasePlugin:
             self.set_zappi_mode(mode)
 
     def set_zappi_mode(self, mode):
-        Domoticz.Debug(f"Setting Zappi mode to {mode}")
-        url = f"{self.baseUrl}/cgi-zappi-mode-{mode}"
+        if self.zappi_sno == 0:
+            Domoticz.Error("Zappi serial number unknown, cannot set mode.")
+            return
+        Domoticz.Debug(f"Setting Zappi {self.zappi_sno} to {mode}")
+        url = f"{self.baseUrl}/cgi-zappi-mode-Z{self.zappi_sno}-{mode}-0-0-0000"
         try:
             r = requests.get(
                 url,
@@ -267,7 +275,7 @@ def onCommand(Unit, Command, Level, Color):
 # Generic helper functions
 def DumpConfigToLog():
     for x in Parameters:
-        if Parameters[x] != "":
+        if Parameters[x] != "" and x != "Password":
             Domoticz.Debug("'" + x + "':'" + str(Parameters[x]) + "'")
     Domoticz.Debug("Device count: " + str(len(Devices)))
     for x in Devices:
