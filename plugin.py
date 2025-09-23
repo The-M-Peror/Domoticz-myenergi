@@ -58,6 +58,8 @@ class BasePlugin:
     # Source - https://myenergi.info/open-energy-monitor-local-emoncms-t2192.html
     # Or... rewrite to combine into a single display status, like this? - https://myenergi.info/how-to-tell-charge-complete-in-api-t1595.html#p13021
 
+    zappi_mode_values = { 0: 4, 10: 1, 20: 2, 30: 3 }  # Selector level to API mode
+
     def __init__(self):
         return
 
@@ -89,9 +91,11 @@ class BasePlugin:
             Domoticz.Device(Name="Zappi Status", Unit=9, TypeName='Text').Create()
         if len(Devices) < 10:
             Domoticz.Device(Name="Charge Status", Unit=10, TypeName='Text').Create()
+        if len(Devices) < 11:
+            Domoticz.Device(Name="Zappi Mode Selector", Unit=11, Type=244, Subtype=62, Switchtype=18,
+                            Options={"LevelNames": "Stop|Fast|Eco|Eco++", "LevelOffHidden": "true", "SelectorStyle": "1"}).Create()
 
         DumpConfigToLog()
-
         Domoticz.Heartbeat(5)
 
     def onStop(self):
@@ -215,6 +219,27 @@ class BasePlugin:
         self.lastPolled += 1
         self.lastPolled %= int(Parameters["Mode3"])
 
+    def onCommand(self, Unit, Command, Level, Color):
+        Domoticz.Debug(f"onCommand called: Unit={Unit}, Command={Command}, Level={Level}")
+        if Unit == 11:  # Zappi Mode Selector
+            mode = self.zappi_mode_values.get(Level, 4)  # Default to Stop
+            self.set_zappi_mode(mode)
+
+    def set_zappi_mode(self, mode):
+        Domoticz.Debug(f"Setting Zappi mode to {mode}")
+        url = f"{self.baseUrl}/cgi-zappi-mode-{mode}"
+        try:
+            r = requests.get(
+                url,
+                auth=requests.auth.HTTPDigestAuth(Parameters["Username"], Parameters["Password"]),
+                headers=self.headers,
+                timeout=self.httpTimeout,
+            )
+            r.raise_for_status()
+            Domoticz.Log(f"Zappi mode set to {self.zappi_mode_texts.get(mode, 'Unknown')}")
+        except Exception as e:
+            Domoticz.Error(f"Failed to set Zappi mode: {e}")
+
 
 global _plugin
 _plugin = BasePlugin()
@@ -234,6 +259,10 @@ def onHeartbeat():
     global _plugin
     _plugin.onHeartbeat()
 
+
+def onCommand(Unit, Command, Level, Color):
+    global _plugin
+    _plugin.onCommand(Unit, Command, Level, Color)
 
 # Generic helper functions
 def DumpConfigToLog():
