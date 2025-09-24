@@ -218,7 +218,7 @@ class BasePlugin:
                     Devices[8].Update(nValue=0, sValue=zappi_zmo_text)
                     Devices[9].Update(nValue=0, sValue=zappi_sta_text)
                     Devices[10].Update(nValue=0, sValue=zappi_pst_text)
-                    Devices[11].Update(nValue=zappi_zmo_selvalue, sValue=zappi_zmo_text)  # Zappi Mode Selector
+                    Devices[11].Update(nValue=2, sValue=str(zappi_zmo_selvalue))  # Zappi Mode Selector
 
                     break # while True
 
