@@ -94,7 +94,7 @@ class BasePlugin:
             Domoticz.Device(Name="Charge Status", Unit=10, TypeName='Text').Create()
         if len(Devices) < 11:
             Domoticz.Device(Name="Zappi Mode Selector", Unit=11, Type=244, Subtype=62, Switchtype=18,
-                            Options={"LevelNames": "Stop|Fast|Eco|Eco++", "LevelOffHidden": "true", "SelectorStyle": "1"}).Create()
+                            Options={"LevelNames": "Stop|Fast|Eco|Eco++", "LevelOffHidden": "false", "SelectorStyle": "0"}).Create()
 
         DumpConfigToLog()
         Domoticz.Heartbeat(5)
