@@ -198,6 +198,7 @@ class BasePlugin:
                             zappi_zmo_text = self.zappi_mode_texts.get(zappi_zmo, 'Unknown')
                             zappi_sta_text = self.zappi_status_texts.get(zappi_sta, 'Unknown')
                             zappi_pst_text = self.charge_status_texts.get(zappi_pst, 'Unknown')
+                            zappi_zmo_selvalue = next((k for k, v in self.zappi_mode_values.items() if v == zappi_zmo), 4)  # Default to Stop
 
                     # Work around negative kWh Domoticz issue #4736 using separate import and export grid meters
                     if (grid_pwr < 0):
@@ -217,7 +218,7 @@ class BasePlugin:
                     Devices[8].Update(nValue=0, sValue=zappi_zmo_text)
                     Devices[9].Update(nValue=0, sValue=zappi_sta_text)
                     Devices[10].Update(nValue=0, sValue=zappi_pst_text)
-                    #Devices[11].Update(nValue=0, sValue=str(zappi_che_watt)+";0")  # TODO
+                    Devices[11].Update(nValue=zappi_zmo_selvalue, sValue=zappi_zmo_text)  # Zappi Mode Selector
 
                     break # while True
 
