@@ -235,7 +235,8 @@ class BasePlugin:
             Domoticz.Error("Zappi serial number unknown, cannot set mode.")
             return
         Domoticz.Debug(f"Setting Zappi {self.zappi_sno} to {mode}")
-        url = f"{self.baseUrl}/cgi-zappi-mode-Z{self.zappi_sno}-{mode}-0-0-0000"
+        url = f"{self.baseUrl}/cgi-zappi-mode-Z{self.zappi_sno}-{mode}-0"
+        Domoticz.Debug(f"calling URL: {url}")
         try:
             r = requests.get(
                 url,
@@ -244,6 +245,8 @@ class BasePlugin:
                 timeout=self.httpTimeout,
             )
             r.raise_for_status()
+            j = r.json()
+            Domoticz.Debug("Received data: %s" % j)
             Domoticz.Log(f"Zappi mode set to {self.zappi_mode_texts.get(mode, 'Unknown')}")
         except Exception as e:
             Domoticz.Error(f"Failed to set Zappi mode: {e}")
